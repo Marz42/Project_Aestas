@@ -44,7 +44,29 @@
 
 # 文件组织
 
-## 目录结构约定
+## 本项目仓库结构（Project Aestas）
+
+与 `architecture.md` 一致，前后端分目录：
+
+```
+backend/app/
+├── api/v1/          # tags, feed_sources, articles, tag_briefs
+├── services/
+│   ├── ingestion/   # RSS 抓取（默认 8h）、清洗、去重
+│   ├── extraction/  # DeepSeek 单条提炼
+│   ├── briefing/    # 8h 窗口 Markdown 简报
+│   └── delivery/    # P2 only：Webhook（MVP 不实现）
+├── models/
+├── schemas/
+└── workers/         # Celery 任务，仅调用 services
+frontend/src/        # P1 起：views + services 镜像 API 资源名
+```
+
+- Python 包名、模块名：`snake_case`
+- API 路径：`kebab-case`（如 `/feed-sources`）
+- 数据库表名：`snake_case` 复数（`articles`, `daily_briefs`）
+
+## 目录结构约定（前端通用）
 
 每个功能模块按以下层次组织（根据实际技术栈调整）：
 
