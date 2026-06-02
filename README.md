@@ -1,6 +1,6 @@
-# Project Paradigma
+# Project Aestas
 
-*Vibe Coding 时代的项目开发基座*
+*垂直领域编辑的 AI 新闻降噪与线索提取工具*
 
 ## 核心理念
 
@@ -44,7 +44,7 @@ cp known-issues.template.md known-issues.md
 cp glossary.template.md glossary.md
 ```
 
-> **为什么这样设计？** 显然这是因为Project Paradigma 也是一个项目，为了避免Agent出现记忆混淆，包含本项目开发历史的 `progress.md`、`decisions.md` 等运行时数据已通过 `.gitignore` 排除。
+> **为什么这样设计？** 模板库本身也是用 Memory-Bank 开发的项目。为避免 Agent 记忆混淆，会累积开发历史的 `progress.md`、`decisions.md` 等运行时数据已通过 `.gitignore` 排除。
 > 你 clone 到的永远是一套干净的模板，不会带有上游项目的开发历史。
 
 ### 3. 配置 IDE 适配器
@@ -76,7 +76,7 @@ Memory-Bank 内的文件按使用频率分为三个温度等级：
 ## 完整目录结构
 
 ```
-paradigma/
+project-root/
 ├── 📄 README.md                              # 本文件
 ├── 📄 AGENT_RULES.md                         # 【源头】IDE 无关的协议原文
 ├── 📄 INIT_PROMPT.md                         # 【入口】多模式会话启动模板
