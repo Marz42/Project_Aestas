@@ -4,28 +4,30 @@
 
 ---
 
-## 当前阶段：文档已定稿 → 进入 M1
+## 当前阶段：M1 完成 → 准备 M2 采集模块
 
 ### 目标
 
-实现基础设施（`roadmap.md` M1）。
+实现 RSS 抓取与文章入库（`roadmap.md` M2）。
 
-### Checklist — 文档（已完成）
+### Checklist — M1（已完成）
 
-- [x] DeepSeek、8h 调度、Markdown-only MVP 写入 HOT 文档
-- [x] README 改为 Project Aestas 项目说明
-- [x] 移除 MVP 推送；`tag_briefs` 替代 `daily_briefs` 命名
+- [x] `backend/` + `pyproject.toml`
+- [x] `deploy/docker-compose.yml`（postgres, redis, api, worker, beat）
+- [x] FastAPI `/health`、统一 `ApiResponse`、`/api/v1/config`
+- [x] Alembic 迁移：`tags`, `feed_sources`, `articles`
+- [x] Celery：`worker_heartbeat`（60s 冒烟）、`fetch_all_feeds`（480min 占位）
+- [x] 单元测试 `tests/test_health.py`（2 passed）
 
-### Checklist — M1（下一步）
+### Checklist — M2（下一步）
 
-- [ ] `backend/` + `pyproject.toml`
-- [ ] `docker-compose.yml`
-- [ ] FastAPI `/health` + `ApiResponse`
-- [ ] Alembic：`tags`, `feed_sources`, `articles`
-- [ ] Celery Beat：`FETCH_INTERVAL_MINUTES=480`
+- [ ] `services/ingestion` RSS 解析与入库
+- [ ] `POST /feed-sources` 等 CRUD
+- [ ] 种子数据：汽车 / 科技 / 军事 tag + 各 1 信源
+- [ ] 实现 `fetch_all_feeds` 任务体
 
 ### 阻塞
 
-- [ ] `DEEPSEEK_API_KEY`：M3 前由你在 `.env` 提供（M1/M2 不需要）
+- [ ] `DEEPSEEK_API_KEY`：M3 前提供
 
 ---

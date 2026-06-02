@@ -21,7 +21,7 @@
 | Alembic | `tags`, `feed_sources`, `articles` |
 | Celery | Beat 冒烟；配置读取 `FETCH_INTERVAL_MINUTES=480` |
 
-**状态**：待开始
+**状态**：✅ 已完成（2026-06-02）
 
 ---
 
@@ -67,7 +67,7 @@ Vue：信源、文章、简报 Markdown 预览、手动触发任务。
 
 | 里程碑 | 状态 |
 |--------|------|
-| M1 基础设施 | ⬜ |
+| M1 基础设施 | ✅ |
 | M2 采集 | ⬜ |
 | M3 简报+Markdown | ⬜ |
 | M4 后台 | ⬜ |

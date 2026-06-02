@@ -52,7 +52,15 @@ FETCH_INTERVAL_MINUTES=480   # 8 小时抓取一次
 BRIEF_WINDOW_HOURS=8         # 简报覆盖最近 8 小时入库文章
 ```
 
-启动方式将在 M1 完成后写入 `memory_bank/manuals/deploy.md`。
+```bash
+docker compose -f deploy/docker-compose.yml up --build
+```
+
+- 健康检查：http://localhost:8000/health
+- 调度配置：http://localhost:8000/api/v1/config
+- API 文档：http://localhost:8000/docs
+
+详见 [`backend/README.md`](backend/README.md)。
 
 ---
 
