@@ -15,9 +15,21 @@ def worker_heartbeat() -> dict[str, str]:
 
 
 @celery_app.task(name="app.workers.tasks.fetch_all_feeds")
-def fetch_all_feeds() -> dict[str, str]:
-    """M2 will implement RSS ingestion; M1 registers the beat slot."""
-    logger.info(
-        "fetch_all_feeds: stub (M2); interval configured via FETCH_INTERVAL_MINUTES"
-    )
-    return {"status": "stub"}
+def fetch_all_feeds() -> dict[str, int | list[dict[str, str | int]]]:
+    from app.core.database import SyncSessionLocal
+    from app.services.ingestion.service import IngestionService
+
+    with SyncSessionLocal() as session:
+        results = IngestionService(session).fetch_all_active(force=False)
+
+    summary = [
+        {
+            "feed_source_id": str(r.feed_source_id),
+            "created": r.articles_created,
+            "skipped": r.articles_skipped,
+        }
+        for r in results
+    ]
+    total_created = sum(r.articles_created for r in results)
+    logger.info("fetch_all_feeds done: created=%s feeds=%s", total_created, len(results))
+    return {"articles_created": total_created, "feeds": summary}
