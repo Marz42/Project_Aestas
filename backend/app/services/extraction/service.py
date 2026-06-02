@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import Settings, get_settings
 from app.models.article import Article
 from app.models.article_insight import ArticleInsight
+from app.models.prompt_template import PromptTemplate
 from app.models.tag import Tag
 from app.services.extraction.llm_client import call_deepseek_for_insight
 from app.services.extraction.markdown import render_short_news_md
@@ -61,9 +62,18 @@ class ExtractionService:
             self._session.commit()
             return None
 
+        prompt_template = None
+        if tag.prompt_template_id:
+            prompt_template = self._session.get(
+                PromptTemplate, tag.prompt_template_id
+            )
+
         try:
             structured = call_deepseek_for_insight(
-                article, tag, settings=self._settings
+                article,
+                tag,
+                prompt_template=prompt_template,
+                settings=self._settings,
             )
             short_md = render_short_news_md(structured)
             if article.insight:

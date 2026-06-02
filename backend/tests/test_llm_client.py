@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, patch
 from app.models.article import Article
 from app.models.tag import Tag
 from app.services.extraction.llm_client import (
-    build_user_prompt,
     call_deepseek_for_insight,
     create_openai_client,
 )
+from app.services.extraction.prompts import resolve_user_prompt
 from app.services.extraction.schemas import ArticleInsightStructured
 
 
@@ -26,7 +26,7 @@ def test_build_user_prompt_contains_url() -> None:
         status="pending",
         dedup_key="k",
     )
-    prompt = build_user_prompt(article, tag)
+    prompt = resolve_user_prompt(article, tag, None)
     assert "https://example.com/news" in prompt
     assert "科技" in prompt
 

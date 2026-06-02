@@ -9,6 +9,7 @@ from app.schemas.feed_source import FetchResultResponse
 from app.schemas.tag_brief import BriefingTaskResult
 from app.services.briefing.service import BriefingService
 from app.services.extraction.service import ExtractionService
+from app.services.extraction.seed_prompts import seed_default_prompts
 from app.services.ingestion.seed import seed_default_feeds
 from app.services.ingestion.service import IngestionService
 
@@ -74,4 +75,10 @@ async def trigger_generate_briefs() -> ApiResponse[list[BriefingTaskResult]]:
 @router.post("/seed-feeds", response_model=ApiResponse[dict[str, int]])
 async def trigger_seed_feeds() -> ApiResponse[dict[str, int]]:
     counts = await asyncio.to_thread(seed_default_feeds)
+    return success(counts)
+
+
+@router.post("/seed-prompts", response_model=ApiResponse[dict[str, int]])
+async def trigger_seed_prompts() -> ApiResponse[dict[str, int]]:
+    counts = await asyncio.to_thread(seed_default_prompts)
     return success(counts)

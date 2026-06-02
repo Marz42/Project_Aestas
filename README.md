@@ -62,6 +62,15 @@ docker compose -f deploy/docker-compose.yml up --build
 
 详见 [`backend/README.md`](backend/README.md)。
 
+## 管理后台（M4）
+
+```bash
+cd frontend && npm install && cp .env.example .env && npm run dev
+```
+
+访问 http://localhost:5173 — Prompt 编辑与板块绑定见侧栏「Prompt」页。  
+Docker 一体化：`docker compose -f deploy/docker-compose.yml up --build`（含 `admin` 服务）。
+
 ---
 
 ## Memory-Bank（Agent 协作文档）

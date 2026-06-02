@@ -66,6 +66,15 @@ services:
       api:
         condition: service_started
 
+  admin:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
   beat:
     build:
       context: ../backend

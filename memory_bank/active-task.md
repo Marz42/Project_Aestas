@@ -4,28 +4,19 @@
 
 ---
 
-## 当前阶段：M3 完成 → P1 管理后台或质量优化
+## 当前阶段：M4 完成
 
-### 目标
+### Checklist — M4（已完成）
 
-Vue 管理后台（`roadmap.md` M4）或推送通道（M5）。
+- [x] Vue 3 + Element Plus 管理后台（控制台 / 信源 / 文章 / 简报）
+- [x] `prompt_templates` 表与 CRUD API
+- [x] 板块绑定 Prompt；DeepSeek 提炼读取自定义模板
+- [x] Docker `admin` 服务（:5173）
+- [x] pytest 30+ passed
 
-### Checklist — M3（已完成）
+### 下一步建议
 
-- [x] 迁移 `002`：`article_insights`、`tag_briefs`、`tag_brief_items`
-- [x] DeepSeek + Instructor 单条提炼
-- [x] 8h 窗口板块 Markdown 简报
-- [x] API：`/articles/{id}/reextract`、`/tag-briefs`、`/tasks/extract-pending`、`/tasks/generate-briefs`
-- [x] Celery：`extract_pending_articles`、`generate_tag_briefs`；`fetch-all` 后链式提炼
-- [x] pytest **28 passed**（含 1 integration）
-
-### Checklist — M4（下一步）
-
-- [ ] Vue 后台：信源、文章、简报预览
-- [ ] 手动触发任务按钮
-
-### 阻塞
-
-- （无）
+- 端到端验证简报质量，按需微调 Prompt
+- M5：飞书推送、去重优化
 
 ---
