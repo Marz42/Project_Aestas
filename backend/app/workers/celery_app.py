@@ -27,5 +27,13 @@ celery_app.conf.update(
             "task": "app.workers.tasks.fetch_all_feeds",
             "schedule": float(settings.fetch_interval_minutes * 60),
         },
+        "extract-pending-articles": {
+            "task": "app.workers.tasks.extract_pending_articles",
+            "schedule": 900.0,
+        },
+        "generate-tag-briefs": {
+            "task": "app.workers.tasks.generate_tag_briefs",
+            "schedule": float(settings.fetch_interval_minutes * 60),
+        },
     },
 )

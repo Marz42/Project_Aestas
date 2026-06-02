@@ -10,6 +10,7 @@ from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.article import Article
     from app.models.feed_source import FeedSource
+    from app.models.tag_brief import TagBrief
 
 
 class Tag(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -26,3 +27,4 @@ class Tag(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         back_populates="tag",
     )
     articles: Mapped[list["Article"]] = relationship(back_populates="tag")
+    briefs: Mapped[list["TagBrief"]] = relationship(back_populates="tag")

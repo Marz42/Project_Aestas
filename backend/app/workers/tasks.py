@@ -32,4 +32,43 @@ def fetch_all_feeds() -> dict[str, int | list[dict[str, str | int]]]:
     ]
     total_created = sum(r.articles_created for r in results)
     logger.info("fetch_all_feeds done: created=%s feeds=%s", total_created, len(results))
-    return {"articles_created": total_created, "feeds": summary}
+
+    from app.services.extraction.service import ExtractionService
+
+    with SyncSessionLocal() as session:
+        extract_stats = ExtractionService(session).extract_pending(limit=30)
+
+    return {
+        "articles_created": total_created,
+        "feeds": summary,
+        "extracted": extract_stats.processed,
+        "extract_skipped": extract_stats.skipped,
+        "extract_failed": extract_stats.failed,
+    }
+
+
+@celery_app.task(name="app.workers.tasks.extract_pending_articles")
+def extract_pending_articles() -> dict[str, int]:
+    from app.core.database import SyncSessionLocal
+    from app.services.extraction.service import ExtractionService
+
+    with SyncSessionLocal() as session:
+        stats = ExtractionService(session).extract_pending(limit=20)
+    return {
+        "processed": stats.processed,
+        "skipped": stats.skipped,
+        "failed": stats.failed,
+    }
+
+
+@celery_app.task(name="app.workers.tasks.generate_tag_briefs")
+def generate_tag_briefs() -> dict[str, int]:
+    from app.core.database import SyncSessionLocal
+    from app.services.briefing.service import BriefingService
+
+    with SyncSessionLocal() as session:
+        results = BriefingService(session).generate_all_tags(force=False)
+    return {
+        "briefs": len([r for r in results if r.created]),
+        "items": sum(r.item_count for r in results),
+    }

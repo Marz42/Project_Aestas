@@ -4,29 +4,28 @@
 
 ---
 
-## 当前阶段：M2 完成 → 准备 M3 简报模块
+## 当前阶段：M3 完成 → P1 管理后台或质量优化
 
 ### 目标
 
-DeepSeek 单条提炼 + 8h 板块 Markdown 简报（`roadmap.md` M3）。
+Vue 管理后台（`roadmap.md` M4）或推送通道（M5）。
 
-### Checklist — M2（已完成）
+### Checklist — M3（已完成）
 
-- [x] RSS 抓取：`feedparser` + `httpx`
-- [x] `IngestionService` 入库与 URL 去重
-- [x] API：`/tags`、`/feed-sources`、`/articles`、`/tasks/seed-feeds`、`/tasks/fetch-all`
-- [x] Celery `fetch_all_feeds` 实装
-- [x] 种子数据：用户提供的 4 个 RSS 源
-- [x] pytest：11 unit + 1 integration（需 Postgres）
+- [x] 迁移 `002`：`article_insights`、`tag_briefs`、`tag_brief_items`
+- [x] DeepSeek + Instructor 单条提炼
+- [x] 8h 窗口板块 Markdown 简报
+- [x] API：`/articles/{id}/reextract`、`/tag-briefs`、`/tasks/extract-pending`、`/tasks/generate-briefs`
+- [x] Celery：`extract_pending_articles`、`generate_tag_briefs`；`fetch-all` 后链式提炼
+- [x] pytest **28 passed**（含 1 integration）
 
-### Checklist — M3（下一步）
+### Checklist — M4（下一步）
 
-- [ ] `article_insights` 表迁移
-- [ ] DeepSeek + Instructor 单条提炼
-- [ ] `tag_briefs` 生成与 Markdown API
+- [ ] Vue 后台：信源、文章、简报预览
+- [ ] 手动触发任务按钮
 
 ### 阻塞
 
-- （无；`DEEPSEEK_API_KEY` 已在本地 `backend/.env` 配置，勿提交 git）
+- （无）
 
 ---

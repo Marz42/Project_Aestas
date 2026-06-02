@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.schemas.insight import ArticleInsightResponse
+
 
 class ArticleResponse(BaseModel):
     id: UUID
@@ -14,5 +16,6 @@ class ArticleResponse(BaseModel):
     published_at: datetime | None
     fetched_at: datetime
     status: str
+    insight: ArticleInsightResponse | None = None
 
     model_config = {"from_attributes": True}

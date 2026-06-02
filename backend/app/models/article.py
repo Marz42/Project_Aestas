@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.article_insight import ArticleInsight
     from app.models.feed_source import FeedSource
     from app.models.tag import Tag
 
@@ -50,3 +51,7 @@ class Article(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     feed_source: Mapped["FeedSource"] = relationship(back_populates="articles")
     tag: Mapped["Tag"] = relationship(back_populates="articles")
+    insight: Mapped["ArticleInsight | None"] = relationship(
+        back_populates="article",
+        uselist=False,
+    )

@@ -42,3 +42,24 @@ curl http://localhost:8000/api/v1/articles -H "X-API-Key: dev-api-key-change-me"
 pytest -q -m "not integration"    # 单元测试
 pytest -q -m integration          # 需 Postgres，会真实拉取 sspai RSS
 ```
+
+## M3 — DeepSeek 提炼与 Markdown 简报
+
+确保 `backend/.env` 已配置 `DEEPSEEK_API_KEY`，并执行迁移：
+
+```bash
+alembic upgrade head
+```
+
+```bash
+# 流水线：抓取 → 提炼 → 生成简报
+curl -X POST http://localhost:8000/api/v1/tasks/fetch-all -H "X-API-Key: dev-api-key-change-me"
+curl -X POST http://localhost:8000/api/v1/tasks/extract-pending -H "X-API-Key: ..."
+curl -X POST http://localhost:8000/api/v1/tasks/generate-briefs -H "X-API-Key: ..."
+
+# 查看简报 Markdown
+curl http://localhost:8000/api/v1/tag-briefs -H "X-API-Key: ..."
+curl http://localhost:8000/api/v1/tag-briefs/{id}/download -H "X-API-Key: ..."
+```
+
+`fetch-all` 任务会在抓取后自动尝试提炼 pending 文章（最多 30 条）。
