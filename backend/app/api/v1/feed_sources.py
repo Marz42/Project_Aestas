@@ -94,8 +94,13 @@ async def update_feed_source(
 
 
 def _run_fetch(source_id: uuid.UUID, force: bool) -> FetchResultResponse:
-    with SyncSessionLocal() as session:
-        stats = IngestionService(session).fetch_source(source_id, force=force)
+    try:
+        with SyncSessionLocal() as session:
+            stats = IngestionService(session).fetch_source(source_id, force=force)
+    except ValueError as exc:
+        raise AppError(str(exc), code=400) from exc
+    except Exception as exc:
+        raise AppError(f"feed fetch failed: {exc}", code=500) from exc
     return FetchResultResponse(
         feed_source_id=stats.feed_source_id,
         entries_seen=stats.entries_seen,
