@@ -6,7 +6,7 @@ From repository root:
 
 ```bash
 cp backend/.env.example backend/.env
-docker compose -f deploy/docker-compose.yml up --build
+docker compose up --build
 ```
 
 - API: http://localhost:8000/health

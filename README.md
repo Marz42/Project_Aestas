@@ -14,7 +14,7 @@
 | **B. 简报** | DeepSeek 单条提炼 → 按板块聚合为 Markdown 报告 |
 | **C. 输出** | 简报写入数据库，经 API 查看/下载；**IM 推送后置** |
 
-详细愿景与边界见 [`memory_bank/project-brief.md`](memory_bank/project-brief.md)。
+详细愿景与边界见 [`memory-bank/project-brief.md`](memory-bank/project-brief.md)。
 
 ---
 
@@ -23,13 +23,13 @@
 | 层级 | 选型 |
 |------|------|
 | 后端 | Python 3.12 · FastAPI · SQLAlchemy · Celery |
-| 前端 | Vue 3 · TypeScript · Element Plus（P1 管理后台） |
+| 前端 | Vue 3 · TypeScript · Element Plus（M4 管理后台） |
 | 数据 | PostgreSQL · Redis |
 | LLM | **DeepSeek**（OpenAI 兼容 API，`DEEPSEEK_API_KEY` 由你在 `.env` 提供） |
 | 部署 | Docker Compose |
 
-架构与目录规划：[`memory_bank/architecture.md`](memory_bank/architecture.md)  
-表结构与 API：[`memory_bank/data-contracts.md`](memory_bank/data-contracts.md)
+架构与目录规划：[`memory-bank/architecture.md`](memory-bank/architecture.md)  
+表结构与 API：[`memory-bank/data-contracts.md`](memory-bank/data-contracts.md)
 
 ---
 
@@ -53,7 +53,7 @@ BRIEF_WINDOW_HOURS=8         # 简报覆盖最近 8 小时入库文章
 ```
 
 ```bash
-docker compose -f deploy/docker-compose.yml up --build
+docker compose up --build
 ```
 
 - 健康检查：http://localhost:8000/health
@@ -69,31 +69,21 @@ cd frontend && npm install && cp .env.example .env && npm run dev
 ```
 
 访问 http://localhost:5173 — Prompt 编辑与板块绑定见侧栏「Prompt」页。  
-Docker 一体化：`docker compose -f deploy/docker-compose.yml up --build`（含 `admin` 服务）。
+Docker 一体化：`docker compose up --build`（含 `admin` 服务）。
 
 ---
 
 ## Memory-Bank（Agent 协作文档）
 
-本项目使用 `memory_bank/` 作为外部记忆，Cursor 会通过 `.cursor/rules/memory-bank-protocol.mdc` 自动加载。
+本项目使用 [`memory-bank/`](memory-bank/) 作为外部记忆，Cursor 会通过 `.cursor/rules/memory-bank-protocol.mdc` 自动加载。
 
 | 温度 | 文件 |
 |------|------|
-| 🔥 HOT | `project-brief.md` · `architecture.md` · `data-contracts.md` · `conventions.md` · `active-task.md` · `progress.md`（本地，gitignore） |
-| 🌡️ WARM | `roadmap.md` |
-| 🧊 COLD | `decisions.md` · `known-issues.md` · `glossary.md`（从 `.template.md` 复制，gitignore） |
+| 🔥 HOT | `project-brief.md` · `architecture.md` · `data-contracts.md` · `conventions.md` · `active-task.md` · `progress.md` |
+| 🌡️ WARM | `roadmap.md` · `domains/*.md` |
+| 🧊 COLD | `decisions.md` · `known-issues.md` · `glossary.md` · `manuals/*.md` |
 
-新会话可从 [`INIT_PROMPT.md`](INIT_PROMPT.md) 选择模式；协议原文见 [`AGENT_RULES.md`](AGENT_RULES.md)。
-
-**首次 clone 后**（若尚未复制运行时模板）：
-
-```bash
-cd memory_bank
-cp progress.template.md progress.md
-cp decisions.template.md decisions.md
-cp known-issues.template.md known-issues.md
-cp glossary.template.md glossary.md
-```
+新会话可从 [`INIT_PROMPT.md`](INIT_PROMPT.md) 选择模式；协议原文见 [`AGENT_RULES.md`](AGENT_RULES.md)。运行时文档已纳入版本库；格式参考见同目录 `*.template.md`。
 
 ---
 

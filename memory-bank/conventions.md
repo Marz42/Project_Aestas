@@ -25,12 +25,12 @@
 
 ## 通用规则
 
-| 场景 | 规范 | 示例 |
-|------|------|------|
-| 变量/函数 | camelCase | `userName`, `getOrderList()` |
-| 常量 | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT`, `API_BASE_URL` |
-| 类/接口/类型 | PascalCase | `UserService`, `OrderCreateInput` |
-| 文件名 | kebab-case | `user-service.ts`, `order-detail.vue` |
+| 场景 | Python | TypeScript / Vue |
+|------|--------|------------------|
+| 变量/函数 | `snake_case` | `camelCase` |
+| 常量 | `UPPER_SNAKE_CASE` | `UPPER_SNAKE_CASE` |
+| 类/类型 | `PascalCase` | `PascalCase` |
+| 文件名 | `snake_case.py` | `kebab-case` 或 `PascalCase.vue` |
 | 布尔变量 | `is` / `has` / `can` / `should` 前缀 | `isActive`, `hasPermission`, `canEdit` |
 | 事件处理函数 | `handle` + 事件名 | `handleSubmit`, `handleRowClick` |
 | 回调 props | `on` + 事件名 | `@on-confirm`, `onUpdate:modelValue` |
@@ -51,21 +51,25 @@
 
 ```
 backend/app/
-├── api/v1/          # tags, feed_sources, articles, tag_briefs
+├── api/v1/          # tags, feed_sources, articles, tag_briefs, prompt_templates, tasks
 ├── services/
-│   ├── ingestion/   # RSS 抓取（默认 8h）、清洗、去重
+│   ├── ingestion/   # RSS 抓取（默认 8h）、清洗、URL 去重
 │   ├── extraction/  # DeepSeek 单条提炼
-│   ├── briefing/    # 8h 窗口 Markdown 简报
-│   └── delivery/    # P2 only：Webhook（MVP 不实现）
+│   └── briefing/    # 8h 窗口 Markdown 简报
+│   # delivery/ — M5 再建，当前目录不存在
 ├── models/
 ├── schemas/
 └── workers/         # Celery 任务，仅调用 services
-frontend/src/        # P1 起：views + services 镜像 API 资源名
+frontend/src/
+├── views/           # M4：Dashboard, Feeds, Articles, Briefs, Prompts
+└── api/             # client.ts, types.ts
 ```
 
 - Python 包名、模块名：`snake_case`
 - API 路径：`kebab-case`（如 `/feed-sources`）
-- 数据库表名：`snake_case` 复数（`articles`, `daily_briefs`）
+- 数据库表名：`snake_case` 复数（`articles`, `tag_briefs`）
+
+Pinia / `composables/` 可在后续增强时引入，M4 未强制要求。
 
 ## 目录结构约定（前端通用）
 

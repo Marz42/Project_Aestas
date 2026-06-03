@@ -9,6 +9,13 @@ from app.services.extraction.prompts import resolve_system_prompt, resolve_user_
 from app.services.extraction.schemas import ArticleInsightStructured
 
 
+def completion_extra_body(settings: Settings) -> dict | None:
+    """DeepSeek V4 thinking models reject Instructor's forced tool_choice."""
+    if "v4" in settings.deepseek_model.lower():
+        return {"thinking": {"type": "disabled"}}
+    return None
+
+
 def create_openai_client(settings: Settings | None = None) -> OpenAI:
     settings = settings or get_settings()
     if not settings.deepseek_api_key:
@@ -31,16 +38,21 @@ def call_deepseek_for_insight(
     openai_client = client or create_openai_client(settings)
     structured_client = instructor.from_openai(openai_client)
 
-    parsed = structured_client.chat.completions.create(
-        model=settings.deepseek_model,
-        messages=[
+    create_kwargs: dict = {
+        "model": settings.deepseek_model,
+        "messages": [
             {"role": "system", "content": resolve_system_prompt(prompt_template)},
             {
                 "role": "user",
                 "content": resolve_user_prompt(article, tag, prompt_template),
             },
         ],
-        response_model=ArticleInsightStructured,
-    )
+        "response_model": ArticleInsightStructured,
+    }
+    extra_body = completion_extra_body(settings)
+    if extra_body is not None:
+        create_kwargs["extra_body"] = extra_body
+
+    parsed = structured_client.chat.completions.create(**create_kwargs)
     parsed.source_url = article.url
     return parsed

@@ -75,6 +75,7 @@ erDiagram
         uuid tag_id FK
         string title
         string url UK
+        text summary_raw
         text content_md
         timestamptz published_at
         timestamptz fetched_at
@@ -112,6 +113,7 @@ erDiagram
         uuid id PK
         string name
         string purpose
+        string description
         text system_prompt
         text user_prompt_template
     }
@@ -129,6 +131,11 @@ erDiagram
 | `source_type` | MVP：`rss` |
 
 ## `articles`
+
+| 字段 | 说明 |
+|------|------|
+| `summary_raw` | RSS 摘要原文 |
+| `content_md` | 可选全文 Markdown（MVP 通常为空，无 Jina） |
 
 | `status` | 含义 |
 |----------|------|
@@ -156,11 +163,11 @@ erDiagram
 |------|------|
 | `window_start` / `window_end` | 8 小时窗口（UTC 存储） |
 | `content_md` | **MVP 主交付物**：完整 Markdown 报告 |
-| `status` | `draft` → `generated` → `failed` |
+| `status` | 契约枚举含 `draft`；**实现默认 `generated`**（无草稿流转） |
 
 唯一约束：`(tag_id, window_start)`。
 
-**简报纳入规则**：`articles.fetched_at`（或 `published_at`，实现时二选一并写死）∈ `[window_start, window_end)` 且对应文章 `status = extracted`。
+**简报纳入规则（已写死）**：`articles.fetched_at` ∈ `[window_start, window_end)` 且 `status = extracted`。
 
 ## `tag_briefs.content_md` 结构建议
 
@@ -182,30 +189,63 @@ erDiagram
 
 # 核心 API（v1）
 
-Base: `/api/v1` · 认证：`X-API-Key`
+Base: `/api/v1`（除根路径健康检查外，均返回 `ApiResponse` 包装）
 
-## Tags / Feed Sources / Articles
+## 认证
 
-（与上一版相同，略）
+| 头 | 说明 |
+|----|------|
+| `X-API-Key` | 与 `API_KEY` 环境变量一致 |
+
+`ENVIRONMENT=development` 且未提供头时放行（生产务必改环境）。`/health` 无认证。
+
+## 根路径（无 `/api/v1` 前缀）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/health` | `{"status":"ok"}`，无 ApiResponse 包装 |
+
+## System（`/api/v1`）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/ready` | DB 连通检查 |
+| GET | `/config` | 暴露 `fetch_interval_minutes`、`brief_window_hours` 等（无密钥） |
+
+## Tags
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/tags` | 列表 |
 | POST | `/tags` | 创建 |
-| GET/POST/PATCH | `/feed-sources` | CRUD；创建时 `fetch_interval_minutes` 默认 480 |
-| POST | `/feed-sources/{id}/fetch` | 手动抓取 |
-| GET | `/articles` | `tag_id`, `status`, `from`, `to` |
-| GET | `/articles/{id}` | 含 insight |
-| POST | `/articles/{id}/reextract` | 重新调用 DeepSeek |
+| GET | `/tags/{id}` | 详情 |
+| PATCH | `/tags/{id}` | 更新（含 `prompt_template_id`） |
 
-## Tag Briefs（原 daily-briefs，更名对齐表名）
+## Feed Sources
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/tag-briefs` | `?tag_id=&window_start=` |
-| GET | `/tag-briefs/{id}` | 返回含 `content_md` |
-| GET | `/tag-briefs/{id}/download` | `Content-Type: text/markdown` 附件 |
-| POST | `/tag-briefs/generate` | `{ "tag_id" }` 或指定 `window_start`；默认最近 8h |
+| GET | `/feed-sources` | 分页列表 |
+| POST | `/feed-sources` | 创建；`fetch_interval_minutes` 默认 480 |
+| PATCH | `/feed-sources/{id}` | 更新 |
+| POST | `/feed-sources/{id}/fetch` | 手动抓取单源 |
+
+## Articles
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/articles` | 查询：`tag_id`, `status`, `from`, `to` 等 |
+| GET | `/articles/{id}` | 详情，含 insight |
+| POST | `/articles/{id}/reextract` | 重新调用 DeepSeek |
+
+## Tag Briefs
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/tag-briefs` | `?tag_id=&...` 分页列表 |
+| GET | `/tag-briefs/{id}` | 含 `content_md` |
+| GET | `/tag-briefs/{id}/download` | `text/markdown` 附件 |
+| POST | `/tag-briefs/generate` | body 可含 `tag_id`、`window_start`；默认当前 8h 窗 |
 
 **响应 data 示例**
 
@@ -223,13 +263,25 @@ Base: `/api/v1` · 认证：`X-API-Key`
 }
 ```
 
+## Prompt Templates
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/prompt-templates` | 列表 |
+| POST | `/prompt-templates` | 创建 |
+| GET | `/prompt-templates/{id}` | 详情 |
+| PATCH | `/prompt-templates/{id}` | 更新 |
+| DELETE | `/prompt-templates/{id}` | 删除 |
+
 ## Tasks
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/tasks/fetch-all` | 手动全量抓取 |
-| POST | `/tasks/generate-briefs` | 手动生成各 tag 简报 |
-| GET | `/health` | `{"status":"ok"}` 无包装 |
+| POST | `/tasks/fetch-all` | 全量抓取（含链式提炼最多 30 条） |
+| POST | `/tasks/extract-pending` | 手动提炼 pending |
+| POST | `/tasks/generate-briefs` | 各 tag 生成简报 |
+| POST | `/tasks/seed-feeds` | 种子 RSS 信源 |
+| POST | `/tasks/seed-prompts` | 种子 Prompt 模板 |
 
 ---
 
@@ -266,5 +318,6 @@ draft | generated | failed
 |------|------|
 | 2026-06-02 | 初版 ER + API |
 | 2026-06-02 | DeepSeek；8h 抓取/简报窗；`tag_briefs`；移除 MVP 推送 |
+| 2026-06-03 | `summary_raw`；Prompt CRUD；完整 API 表；`fetched_at` 规则写死；认证说明 |
 
 ---

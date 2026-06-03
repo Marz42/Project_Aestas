@@ -17,7 +17,7 @@
 
 请先阅读 README.md 的"如何使用"部分，理解完整的设置流程。然后帮我按以下步骤操作：
 
-1. 激活 runtime 模板 — 将 memory_bank/ 下的所有 .template.md 复制为 .md：
+1. 激活 runtime 模板 — 将 memory-bank/ 下的所有 .template.md 复制为 .md（若仓库已含对应 .md 则跳过）：
    - progress.template.md → progress.md
    - decisions.template.md → decisions.md
    - known-issues.template.md → known-issues.md

@@ -13,7 +13,7 @@ npm run dev
 
 ## Docker
 
-随根目录 `deploy/docker-compose.yml` 启动后访问 http://localhost:5173
+随仓库根目录 `docker compose up` 启动后访问 http://localhost:5173
 
 ## 功能
 
