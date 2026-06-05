@@ -18,6 +18,7 @@ class TagBriefResponse(BaseModel):
     window_start: datetime
     window_end: datetime
     title: str
+    intro_md: str = ""
     content_md: str
     status: str
     item_count: int = 0

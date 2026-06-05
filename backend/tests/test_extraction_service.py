@@ -52,12 +52,17 @@ def test_extract_article_calls_deepseek(article_with_tag: tuple[Article, Tag]) -
         key_facts=["f"],
         why_it_matters="w",
         source_url=article.url,
+        content_tags=["technology"],
     )
 
-    with patch(
-        "app.services.extraction.service.call_deepseek_for_insight",
-        return_value=structured,
+    with (
+        patch(
+            "app.services.extraction.service.call_deepseek_for_insight",
+            return_value=structured,
+        ),
+        patch("app.services.extraction.service.EmbeddingService") as mock_embed,
     ):
+        mock_embed.return_value.embed_insight.return_value = None
         insight = ExtractionService(session).extract_article(article.id)
 
     assert insight is not None

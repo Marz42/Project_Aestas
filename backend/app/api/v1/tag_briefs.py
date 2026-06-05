@@ -30,6 +30,7 @@ def _brief_to_response(brief: TagBrief, tag_name: str | None, item_count: int) -
         window_start=brief.window_start,
         window_end=brief.window_end,
         title=brief.title,
+        intro_md=brief.intro_md,
         content_md=brief.content_md,
         status=brief.status,
         item_count=item_count,

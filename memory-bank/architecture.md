@@ -68,7 +68,20 @@ flowchart TB
 1. **采集（8h）**：Beat 触发 `fetch_all_feeds` → RSS → `articles`；任务末尾链式 `extract_pending(limit=30)`。
 2. **提炼**：DeepSeek → `article_insights`；兜底 Beat 每 900s 运行 `extract_pending_articles(limit=20)`。
 3. **简报**：`generate_tag_briefs` 按 tag、`fetched_at` 落在 `[now-8h, now)` 且 `status=extracted` → `tag_briefs.content_md`。
-4. **输出**：REST 与 Vue 后台查看/下载 Markdown；**无 IM Webhook（M5）**。
+4. **输出**：REST 与 Vue 后台查看/下载 Markdown；IM 推送 **M6+**。
+
+---
+
+# M5 架构增量（M5a/b-1/c 已实施，M5b-2 待做）
+
+| 组件 | 说明 |
+|------|------|
+| `services/clustering/` | 同板块 LLM 事件分组 → `story_clusters` |
+| pgvector + 本地 embedding | M5b-2；`pgvector/pgvector:pg16` + worker 内 sentence-transformers |
+| `tag_briefs.intro_md` | 周期板块导语 |
+| Prompt `purpose` 扩展 | `clustering`、`briefing_intro` 等，**全部在 Prompt 页可编辑** |
+
+目标流水线：`fetch` → `extract` → `cluster` → `brief`（按事件节 + 多链接）。
 
 ---
 
@@ -76,9 +89,11 @@ flowchart TB
 
 | 能力 | 计划 |
 |------|------|
-| Jina Reader 全文 | M5 或更晚 |
-| `reports/` 目录导出 | 未规划实现 |
-| `services/delivery/`、飞书/企微 | M5 |
+| 事件聚类 / pgvector | M5b（已规划） |
+| Jina Reader 全文 | M6+ |
+| `reports/` 目录导出 | 未规划 |
+| `services/delivery/`、飞书/企微 | **M6+** |
+| 跨板块聚类 | M6+ |
 | GitHub Actions CI | TODO |
 
 ---
@@ -97,6 +112,7 @@ Project_Aestas/
 │   │   ├── services/
 │   │   │   ├── ingestion/
 │   │   │   ├── extraction/
+│   │   │   ├── clustering/   # M5b
 │   │   │   └── briefing/
 │   │   └── workers/
 │   ├── alembic/

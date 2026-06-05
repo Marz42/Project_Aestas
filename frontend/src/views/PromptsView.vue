@@ -4,11 +4,23 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { api, unwrap } from "../api/client";
 import type { PromptTemplate, Tag } from "../api/types";
 
+const PURPOSE_OPTIONS = [
+  { value: "extraction", label: "单条提炼 (extraction)" },
+  { value: "clustering", label: "事件聚类 (clustering)" },
+  { value: "briefing_intro", label: "简报导语 (briefing_intro)" },
+  { value: "briefing_cluster", label: "事件节文案 (briefing_cluster)" },
+  { value: "cluster_title", label: "事件标题润色 (cluster_title)" },
+];
+
+const CHINESE_DEFAULT_SYSTEM =
+  "你是专业新闻编辑助手。根据原文提取线索，严禁编造未出现的事实或数据。\n输出必须完全依据原文；source_url 必须与用户提供的链接一致。\n\n输出语言：headline、summary、key_facts、why_it_matters 必须使用简体中文。";
+
 const loading = ref(false);
 const prompts = ref<PromptTemplate[]>([]);
 const tags = ref<Tag[]>([]);
 const dialogVisible = ref(false);
 const editingId = ref<string | null>(null);
+const filterPurpose = ref<string>("");
 
 const form = reactive({
   name: "",
@@ -18,9 +30,14 @@ const form = reactive({
   user_prompt_template: "",
 });
 
-const placeholders = "{tag_name} {tag_slug} {title} {url} {body}";
+const placeholders = "{tag_name} {tag_slug} {title} {url} {body} — 聚类/导语另有 {window_start} {window_end} {article_lines} {event_lines}";
 
 const dialogTitle = computed(() => (editingId.value ? "编辑 Prompt" : "新建 Prompt"));
+
+const filteredPrompts = computed(() => {
+  if (!filterPurpose.value) return prompts.value;
+  return prompts.value.filter((p) => p.purpose === filterPurpose.value);
+});
 
 async function load() {
   loading.value = true;
@@ -43,8 +60,7 @@ function resetForm() {
   form.name = "";
   form.purpose = "extraction";
   form.description = "";
-  form.system_prompt =
-    "你是专业新闻编辑助手。根据原文提取线索，严禁编造未出现的事实或数据。\n输出必须完全依据原文；source_url 必须与用户提供的链接一致。";
+  form.system_prompt = CHINESE_DEFAULT_SYSTEM;
   form.user_prompt_template = `板块: {tag_name} ({tag_slug})
 标题: {title}
 原文链接: {url}
@@ -102,6 +118,10 @@ async function remove(row: PromptTemplate) {
   }
 }
 
+function purposeLabel(purpose: string) {
+  return PURPOSE_OPTIONS.find((o) => o.value === purpose)?.label || purpose;
+}
+
 function tagName(tagId: string | null) {
   if (!tagId) return "—";
   return tags.value.find((t) => t.id === tagId)?.name || tagId.slice(0, 8);
@@ -114,12 +134,16 @@ async function assignTag(tag: Tag, promptId: string | null) {
         prompt_template_id: promptId || null,
       })
     );
-    ElMessage.success(`已为「${tag.name}」设置 Prompt`);
+    ElMessage.success(`已为「${tag.name}」设置提炼 Prompt`);
     await load();
   } catch (e) {
     ElMessage.error((e as Error).message);
   }
 }
+
+const extractionPrompts = computed(() =>
+  prompts.value.filter((p) => p.purpose === "extraction")
+);
 
 onMounted(load);
 </script>
@@ -130,13 +154,32 @@ onMounted(load);
       <el-card>
         <template #header>
           <div class="row">
-            <span>已保存的 Prompt</span>
-            <el-button type="primary" size="small" @click="openCreate">新建</el-button>
+            <span>Prompt 模板（全部用途可编辑）</span>
+            <el-space>
+              <el-select
+                v-model="filterPurpose"
+                placeholder="筛选用途"
+                clearable
+                style="width: 180px"
+                size="small"
+              >
+                <el-option
+                  v-for="o in PURPOSE_OPTIONS"
+                  :key="o.value"
+                  :label="o.label"
+                  :value="o.value"
+                />
+              </el-select>
+              <el-button type="primary" size="small" @click="openCreate">新建</el-button>
+            </el-space>
           </div>
         </template>
-        <el-table v-loading="loading" :data="prompts" stripe>
+        <el-table v-loading="loading" :data="filteredPrompts" stripe>
           <el-table-column prop="name" label="名称" min-width="140" />
-          <el-table-column prop="purpose" label="用途" width="100" />
+          <el-table-column label="用途" width="180">
+            <template #default="{ row }">{{ purposeLabel(row.purpose) }}</template>
+          </el-table-column>
+          <el-table-column prop="description" label="说明" min-width="120" show-overflow-tooltip />
           <el-table-column label="操作" width="160">
             <template #default="{ row }">
               <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -144,30 +187,28 @@ onMounted(load);
             </template>
           </el-table-column>
         </el-table>
-        <p class="hint">用户模板可用占位符：{{ placeholders }}</p>
+        <p class="hint">占位符：{{ placeholders }}</p>
       </el-card>
     </el-col>
 
     <el-col :span="10">
-      <el-card header="板块绑定 Prompt">
+      <el-card header="板块绑定提炼 Prompt">
         <el-table :data="tags" size="small">
           <el-table-column prop="name" label="板块" width="80" />
-          <el-table-column label="当前 Prompt">
-            <template #default="{ row }">
-              {{ tagName(row.prompt_template_id) }}
-            </template>
+          <el-table-column label="当前">
+            <template #default="{ row }">{{ tagName(row.prompt_template_id) }}</template>
           </el-table-column>
           <el-table-column label="选择" min-width="160">
             <template #default="{ row }">
               <el-select
                 :model-value="row.prompt_template_id || ''"
-                placeholder="选择 Prompt"
+                placeholder="extraction"
                 clearable
                 size="small"
                 @change="(v: string) => assignTag(row, v || null)"
               >
                 <el-option
-                  v-for="p in prompts"
+                  v-for="p in extractionPrompts"
                   :key="p.id"
                   :label="p.name"
                   :value="p.id"
@@ -185,16 +226,21 @@ onMounted(load);
       <el-form-item label="名称" required>
         <el-input v-model="form.name" />
       </el-form-item>
-      <el-form-item label="用途">
+      <el-form-item label="用途" required>
         <el-select v-model="form.purpose" style="width: 100%">
-          <el-option label="单条提炼 (extraction)" value="extraction" />
+          <el-option
+            v-for="o in PURPOSE_OPTIONS"
+            :key="o.value"
+            :label="o.label"
+            :value="o.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="说明">
         <el-input v-model="form.description" />
       </el-form-item>
       <el-form-item label="System" required>
-        <el-input v-model="form.system_prompt" type="textarea" :rows="5" />
+        <el-input v-model="form.system_prompt" type="textarea" :rows="6" />
       </el-form-item>
       <el-form-item label="User 模板" required>
         <el-input v-model="form.user_prompt_template" type="textarea" :rows="8" />

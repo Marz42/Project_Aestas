@@ -9,6 +9,7 @@ def test_render_short_news_md_includes_fields() -> None:
         key_facts=["事实 A", "事实 B"],
         why_it_matters="影响说明",
         source_url="https://example.com/a",
+        content_tags=["technology", "politics"],
     )
     md = render_short_news_md(structured)
     assert "测试标题" in md

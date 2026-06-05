@@ -2,7 +2,7 @@ name: aestas
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: aestas
       POSTGRES_PASSWORD: aestas
@@ -41,6 +41,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      HF_HOME: /models
+    volumes:
+      - model_cache:/models
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,6 +63,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      HF_HOME: /models
+    volumes:
+      - model_cache:/models
     depends_on:
       postgres:
         condition: service_healthy
@@ -98,3 +104,4 @@ services:
 
 volumes:
   postgres_data:
+  model_cache:

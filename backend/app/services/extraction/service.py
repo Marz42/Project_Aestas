@@ -10,6 +10,7 @@ from app.models.article import Article
 from app.models.article_insight import ArticleInsight
 from app.models.prompt_template import PromptTemplate
 from app.models.tag import Tag
+from app.services.clustering.embedding import EmbeddingService
 from app.services.extraction.llm_client import call_deepseek_for_insight
 from app.services.extraction.markdown import render_short_news_md
 
@@ -84,9 +85,20 @@ class ExtractionService:
                 article_id=article.id,
                 structured=structured.model_dump(),
                 short_news_md=short_md,
+                content_tags=structured.content_tags,
             )
             self._session.add(insight)
             article.status = "extracted"
+            self._session.flush()
+            try:
+                EmbeddingService(self._session, self._settings).embed_insight(
+                    insight, article
+                )
+            except Exception:
+                logger.exception(
+                    "Embedding failed for article %s; run embed-pending later",
+                    article_id,
+                )
             self._session.commit()
             self._session.refresh(insight)
             return insight

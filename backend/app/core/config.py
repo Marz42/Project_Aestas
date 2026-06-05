@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
 
+    clustering_mode: str = "vector"
+    embedding_model: str = "BAAI/bge-m3"
+    reranker_model: str = "BAAI/bge-reranker-v2-m3"
+    embedding_dimensions: int = 1024
+    ann_top_k: int = 20
+    rerank_pair_threshold: float = 0.65
+    rerank_cluster_avg_min: float = 0.80
+    hf_home: str = "/models"
+
 
 @lru_cache
 def get_settings() -> Settings:

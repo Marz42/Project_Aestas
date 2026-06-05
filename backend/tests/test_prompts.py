@@ -33,5 +33,13 @@ def test_resolve_user_prompt_uses_template() -> None:
     assert text == "URL=https://example.com/x TAG=科技"
 
 
+def test_resolve_system_prompt_includes_taxonomy() -> None:
+    from app.services.extraction.prompts import resolve_system_prompt
+
+    system = resolve_system_prompt(None)
+    assert "content_tags" in system
+    assert "technology" in system
+
+
 def test_resolve_system_prompt_fallback() -> None:
     assert "编辑助手" in resolve_system_prompt(None)

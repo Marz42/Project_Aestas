@@ -4,31 +4,32 @@
 
 ---
 
-## 当前阶段：M4 完成 · 文档已对齐（2026-06-03）
+## 当前阶段：M5b-2 已编码（待 Docker 迁移与 E2E）
 
-### Checklist — M4（已完成）
+### 已完成
 
-- [x] Vue 3 + Element Plus 管理后台（控制台 / 信源 / 文章 / 简报 / Prompt）
-- [x] `prompt_templates` 表与 CRUD API
-- [x] 板块绑定 Prompt；DeepSeek 提炼读取自定义模板
-- [x] Docker `admin` 服务（:5173）
-- [x] pytest 套件（`backend/tests/`，18 个测试模块）
+- [x] pgvector 镜像、`005` 迁移（taxonomy、content_tags、embedding）
+- [x] 提炼 `content_tags` 1~3 + Prompt 注入标签池
+- [x] `seed-taxonomy`、extract 后 bge-m3 embed、`embed-pending`
+- [x] ANN `content_tags &&` + bge-reranker + 增量门禁聚类
+- [x] `CLUSTERING_MODE=vector|llm`；`cluster_title` LLM 润色
+- [x] 简报按成员 tag / content_tags 交集纳入 cluster
+- [x] 控制台：标签池、补向量、向量/LLM 聚类
 
-### Checklist — 文档对齐（已完成）
+### 本地验收步骤
 
-- [x] `memory-bank/` 目录命名统一
-- [x] COLD 运行时文档入库（progress / decisions / known-issues / glossary）
-- [x] HOT + domains + manuals 与代码同步
+```powershell
+docker compose up -d --build
+docker compose exec api alembic upgrade head
+# API：seed-taxonomy → seed-prompts → reextract 或 extract-pending → embed-pending → cluster-briefs → generate-briefs
+```
 
-### E2E 验证（2026-06-03，已完成）
+历史文章需 **reextract**（补 content_tags）再 **embed-pending**。
 
-- [x] BBC + TWZ RSS；`deepseek-v4-flash`；72 条提炼、军事 34 / 科技 38 条简报
-- [x] `llm_client` V4 thinking 与 Instructor 兼容修复
+### 配置（`backend/.env` 可选）
 
-### 下一工作包（待启动）
-
-- [ ] 管理后台 http://localhost:5173 完整浏览简报，按需微调 Prompt
-- [ ] 恢复/调整其他信源（少数派、联合早报）或保持双源测试
-- [ ] M5 选型：飞书 Webhook **或** 去重增强
+- `CLUSTERING_MODE=vector`（默认）
+- `RERANK_PAIR_THRESHOLD=0.85`
+- `RERANK_CLUSTER_AVG_MIN=0.80`
 
 ---

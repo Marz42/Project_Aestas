@@ -2,7 +2,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -23,6 +23,11 @@ class Tag(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=True),
         ForeignKey("prompt_templates.id", ondelete="SET NULL"),
         nullable=True,
+    )
+    taxonomy_slugs: Mapped[list[str]] = mapped_column(
+        ARRAY(String(32)),
+        nullable=False,
+        server_default="{}",
     )
 
     feed_sources: Mapped[list["FeedSource"]] = relationship(

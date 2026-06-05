@@ -121,8 +121,9 @@ PostgreSQL · Redis · Docker Compose · GitHub Actions（TODO）
 | P0 | API 查看/下载简报 | 已完成 |
 | P1 | Vue 管理后台 | 已完成（M4） |
 | P1 | 基础去重（URL 唯一） | 已完成 |
-| P1 | 去重增强 / 全文 Jina | M5 |
-| P2 | IM Webhook 推送 | 未做（M5） |
+| P1 | 全中文 Prompt + 事件聚类 + 简报体验 | M5（进行中规划） |
+| P2 | IM Webhook 推送 | M6+ |
+| P2 | 全文 Jina / 爬虫 | M6+ |
 
 ## 明确不做（MVP）
 

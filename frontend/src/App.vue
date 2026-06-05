@@ -9,6 +9,7 @@ const menus = [
   { path: "/", label: "控制台" },
   { path: "/feeds", label: "信源" },
   { path: "/articles", label: "文章" },
+  { path: "/clusters", label: "事件" },
   { path: "/briefs", label: "简报" },
   { path: "/prompts", label: "Prompt" },
 ];

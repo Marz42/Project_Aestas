@@ -74,3 +74,68 @@
 **下一步建议**:
 
 - 在 http://localhost:5173 预览完整简报；满意后进入 M5 或 Prompt 微调
+
+---
+
+### 2026-06-03 - M5 路线确认（文档更新，待实施）
+
+**完成事项**:
+
+- [x] 与用户确认 M5 范围：M5a 中文 Prompt（**全部 Prompt 前台可编辑**）→ M5b 同板块聚类（**先 LLM，后本地 embedding+pgvector**）→ M5c 简报（**导语+一事件一节多链接**）
+- [x] 推送移出 M5；URL 去重保留、不做标题去重替代聚类
+- [x] 更新 `roadmap.md`、`active-task.md`、`data-contracts.md`（M5 计划契约）、`decisions.md`（ADR-007–010）、`domains/clustering.md` 等
+
+**踩坑记录**:
+
+- 无
+
+**遗留问题**:
+
+- [ ] 用户确认后开始 M5a 编码
+
+**下一步建议**:
+
+- 用户回复「开始实施」后从 M5a 动手
+
+---
+
+### 2026-06-03 - M5 实施（M5a / M5b-1 / M5c）
+
+**完成事项**:
+
+- [x] M5a：中文默认 Prompt、`seed-prompts` 四类模板、schema 中文约束
+- [x] M5b-0/1：`story_clusters` 迁移、聚类服务、LLM 分组、`POST /tasks/cluster-briefs`、`GET /story-clusters`
+- [x] M5c：`intro_md`、按 cluster 生成简报 Markdown、简报/聚类前台、控制台流水线按钮
+- [x] 测试：36 passed（含 `test_clustering_markdown`、`test_briefing_service` mock 更新）
+- [x] 前端 `npm run build` 通过
+
+**踩坑记录**:
+
+- `test_clustering_service` 缺 DB fixture，改为仅保留 markdown 单元测试
+- `deepseek-v4-flash` 聚类/导语 E2E 尚未在本会话跑通
+
+**遗留问题**:
+
+- [ ] Docker 内 `alembic upgrade head` + 全流水线 E2E
+- [ ] M5a 验收：重提炼后简报全中文
+- [ ] M5b-2 pgvector（未开始）
+
+**下一步建议**:
+
+- `docker compose up -d --build` → `seed-prompts` → fetch → extract → cluster-briefs → generate-briefs
+
+---
+
+### 2026-06-03 - M5b-2 实施（向量聚类 + 多标签）
+
+**完成事项**:
+
+- [x] Postgres `pgvector/pgvector:pg16`；迁移 `005`（taxonomy、content_tags、embedding HNSW）
+- [x] 提炼输出 `content_tags` 1~3；`seed-taxonomy`；extract 后 bge-m3 向量化
+- [x] ANN `content_tags &&` + bge-reranker-v2-m3 + 增量归属（pair≥0.85 & avg≥0.80）
+- [x] `CLUSTERING_MODE=vector|llm`；`cluster_title` LLM 润色；控制台新按钮
+- [x] pytest 42 passed（集成测试需 pgvector 镜像迁移后通过）
+
+**下一步**:
+
+- Docker：`alembic upgrade head` → `seed-taxonomy` → 历史文章 reextract → `embed-pending` → `cluster-briefs`

@@ -44,9 +44,31 @@ export interface TagBrief {
   tag_id: string;
   tag_name: string | null;
   title: string;
+  intro_md?: string;
   window_start: string;
   window_end: string;
   status: string;
   item_count: number;
   content_md?: string;
+}
+
+export interface StoryClusterArticle {
+  article_id: string;
+  title: string;
+  url: string;
+  source_name: string | null;
+  role: string;
+}
+
+export interface StoryCluster {
+  id: string;
+  tag_id: string;
+  tag_name: string | null;
+  window_start: string;
+  window_end: string;
+  title: string;
+  summary: string;
+  article_count: number;
+  sort_order: number;
+  articles: StoryClusterArticle[];
 }

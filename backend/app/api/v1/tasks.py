@@ -1,15 +1,19 @@
 import asyncio
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.core.database import SyncSessionLocal
 from app.core.deps import verify_api_key
 from app.core.response import ApiResponse, success
 from app.schemas.feed_source import FetchResultResponse
+from app.schemas.clustering import ClusteringTaskResult
 from app.schemas.tag_brief import BriefingTaskResult
 from app.services.briefing.service import BriefingService
+from app.services.clustering.service import ClusteringService
 from app.services.extraction.service import ExtractionService
+from app.services.clustering.embedding import EmbeddingService
 from app.services.extraction.seed_prompts import seed_default_prompts
+from app.services.taxonomy.seed import seed_taxonomy
 from app.services.ingestion.seed import seed_default_feeds
 from app.services.ingestion.service import IngestionService
 
@@ -40,6 +44,20 @@ def _extract_pending() -> dict[str, int]:
     }
 
 
+def _cluster_briefs(force: bool, mode: str | None) -> list[ClusteringTaskResult]:
+    with SyncSessionLocal() as session:
+        results = ClusteringService(session).cluster_all_tags(force=force, mode=mode)
+    return [
+        ClusteringTaskResult(
+            tag_id=r.tag_id,
+            cluster_count=r.cluster_count,
+            article_count=r.article_count,
+            created=r.created,
+        )
+        for r in results
+    ]
+
+
 def _generate_briefs(force: bool) -> list[BriefingTaskResult]:
     with SyncSessionLocal() as session:
         results = BriefingService(session).generate_all_tags(force=force)
@@ -64,6 +82,31 @@ async def trigger_fetch_all() -> ApiResponse[list[FetchResultResponse]]:
 async def trigger_extract_pending() -> ApiResponse[dict[str, int]]:
     stats = await asyncio.to_thread(_extract_pending)
     return success(stats)
+
+
+def _embed_pending() -> dict[str, int]:
+    with SyncSessionLocal() as session:
+        return EmbeddingService(session).embed_pending()
+
+
+@router.post("/cluster-briefs", response_model=ApiResponse[list[ClusteringTaskResult]])
+async def trigger_cluster_briefs(
+    mode: str | None = Query(default=None, description="vector or llm"),
+) -> ApiResponse[list[ClusteringTaskResult]]:
+    results = await asyncio.to_thread(_cluster_briefs, True, mode)
+    return success(results)
+
+
+@router.post("/embed-pending", response_model=ApiResponse[dict[str, int]])
+async def trigger_embed_pending() -> ApiResponse[dict[str, int]]:
+    stats = await asyncio.to_thread(_embed_pending)
+    return success(stats)
+
+
+@router.post("/seed-taxonomy", response_model=ApiResponse[dict[str, int]])
+async def trigger_seed_taxonomy() -> ApiResponse[dict[str, int]]:
+    counts = await asyncio.to_thread(seed_taxonomy)
+    return success(counts)
 
 
 @router.post("/generate-briefs", response_model=ApiResponse[list[BriefingTaskResult]])

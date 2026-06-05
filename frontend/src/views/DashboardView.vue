@@ -28,17 +28,35 @@ async function runTask(path: string, label: string) {
       <el-button :loading="loading" @click="runTask('/api/v1/tasks/seed-prompts', '种子 Prompt')">
         初始化 Prompt
       </el-button>
+      <el-button :loading="loading" @click="runTask('/api/v1/tasks/seed-taxonomy', '标签池')">
+        初始化标签池
+      </el-button>
       <el-button :loading="loading" type="primary" @click="runTask('/api/v1/tasks/fetch-all', '抓取')">
         抓取 RSS
       </el-button>
       <el-button :loading="loading" @click="runTask('/api/v1/tasks/extract-pending', '提炼')">
         AI 提炼
       </el-button>
+      <el-button :loading="loading" @click="runTask('/api/v1/tasks/embed-pending', '补向量')">
+        补向量
+      </el-button>
+      <el-button :loading="loading" @click="runTask('/api/v1/tasks/cluster-briefs', '向量聚类')">
+        事件聚类
+      </el-button>
+      <el-button
+        :loading="loading"
+        @click="runTask('/api/v1/tasks/cluster-briefs?mode=llm', 'LLM 聚类')"
+      >
+        LLM 聚类
+      </el-button>
       <el-button :loading="loading" @click="runTask('/api/v1/tasks/generate-briefs', '简报')">
         生成简报
       </el-button>
     </el-space>
-    <p class="hint">建议顺序：初始化 → 抓取 → 提炼 → 生成简报。API Key 在 frontend/.env 配置。</p>
+    <p class="hint">
+      建议顺序：初始化标签池/Prompt → 抓取 → 提炼（含多标签+向量）→ 补向量 →
+      <strong>向量聚类</strong>（或 LLM 聚类）→ 生成简报。
+    </p>
   </el-card>
 </template>
 

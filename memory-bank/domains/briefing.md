@@ -6,43 +6,44 @@
 
 ## 职责
 
-- 按 tag 聚合时间窗内已提炼文章
-- 生成 `tag_briefs.content_md` 与 `tag_brief_items` 关联
-- 保证 `(tag_id, window_start)` 幂等
+- 按 tag + 时间窗聚合内容，生成 `tag_briefs`
+- M4：按**文章**逐条写入 `content_md`
+- M5c：按**事件 cluster** 一节 + **周期导语** + 多链接
 
 ## 关键代码
 
 | 文件 | 作用 |
 |------|------|
 | `backend/app/services/briefing/service.py` | `BriefingService` |
-| `backend/app/services/briefing/markdown.py` | `render_tag_brief_md` |
+| `backend/app/services/briefing/markdown.py` | Markdown 渲染 |
 | `backend/app/core/time_windows.py` | `current_brief_window()` |
 | `backend/app/workers/tasks.py` | `generate_tag_briefs` |
-| `backend/app/api/v1/tag_briefs.py` | 查询、下载、手动 generate |
 
 ## 时间窗
 
-- 默认：`window_end = now(UTC)`，`window_start = now - BRIEF_WINDOW_HOURS`（8）
-- 纳入条件：`Article.fetched_at >= window_start` 且 `< window_end`，`status == extracted`
-- 排序：按 `fetched_at` 降序
+`window_end = now(UTC)`，`window_start = now - BRIEF_WINDOW_HOURS`（8）
+
+## M5c 简报形态（已确认）
+
+1. **本期综述**（`intro_md`）：本周期、本板块内所有事件的**整体中文总结**（独立 Prompt，`purpose=briefing_intro`，后台可编辑）
+2. **事件节**（每个 `story_cluster` 一节）：
+   - 事件标题 + 合并摘要
+   - **报道来源**：多条原文链接（BBC、TWZ、CNN…）
+3. 统计行：事件数 + 报道篇数
+
+流水线顺序（M5 目标）：`fetch` → `extract` → **`cluster`** → `generate_tag_briefs`
 
 ## 幂等
 
-已存在同 `(tag_id, window_start)` 的 `TagBrief` 且 `force=False` 时直接返回已有记录及 `item_count`。
+`(tag_id, window_start)` 唯一；`force=True` 时删除重建。
 
-`force=True` 时删除旧简报后重建。
+## 当前实现（M4）
 
-## 输出
-
-- `tag_briefs.status`：新建默认为 `generated`
-- `content_md`：板块标题、窗口、每条 insight 卡片（标题、摘要、要点、原文链接）
-- 下载：`GET /tag-briefs/{id}/download` → `text/markdown`
-
-## 调度与手动
-
-- Beat：`generate_tag_briefs`，周期与 fetch 相同（8h）
-- 手动：`POST /tasks/generate-briefs`、`POST /tag-briefs/generate`（可指定 `tag_id`）
+- 纳入：`fetched_at` 在窗内且 `status=extracted` 的 articles
+- `content_md` 按文章编号，单链接
 
 ## 测试
 
-`test_briefing_service.py`、`test_briefing_markdown.py`、`test_tag_briefs_api.py`、`test_workers_m3.py`
+`test_briefing_service.py`、`test_briefing_markdown.py`、`test_tag_briefs_api.py`
+
+---

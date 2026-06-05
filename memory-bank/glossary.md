@@ -14,7 +14,9 @@
 | 提炼 / Insight | Article Insight | DeepSeek 生成的结构化摘要与短讯 Markdown | `article_insights` |
 | 板块简报 | Tag Brief | 某 tag 在时间窗内的 Markdown 汇总报告 | `tag_briefs.content_md` |
 | 简报项 | Tag Brief Item | 简报内引用的文章及排序 | `tag_brief_items` |
-| Prompt 模板 | Prompt Template | 提炼用的 system/user 模板 | 可绑定到 tag |
+| Prompt 模板 | Prompt Template | LLM 用的 system/user 模板 | 可绑定到 tag；**全部须在后台可编辑** |
+| 事件簇 | Story Cluster | 同一新闻事件的多篇报道归并 | `story_clusters` |
+| 周期导语 | Brief Intro | 本窗该板块整体中文综述 | `tag_briefs.intro_md` |
 
 ---
 

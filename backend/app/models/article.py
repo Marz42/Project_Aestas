@@ -48,6 +48,17 @@ class Article(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default="pending",
     )
     dedup_key: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    source_origin: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="rss",
+    )
+    story_cluster_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("story_clusters.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     feed_source: Mapped["FeedSource"] = relationship(back_populates="articles")
     tag: Mapped["Tag"] = relationship(back_populates="articles")

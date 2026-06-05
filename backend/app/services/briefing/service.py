@@ -9,10 +9,14 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import Settings, get_settings
 from app.core.time_windows import current_brief_window
 from app.models.article import Article
-from app.models.article_insight import ArticleInsight
+from app.models.story_cluster import StoryCluster, StoryClusterArticle
 from app.models.tag import Tag
 from app.models.tag_brief import TagBrief, TagBriefItem
-from app.services.briefing.markdown import render_tag_brief_md
+from app.services.briefing.markdown import render_cluster_brief_md
+from app.services.clustering.llm_grouping import call_brief_intro_llm
+from app.services.clustering.match_utils import cluster_matches_tag
+from app.services.clustering.service import ClusteringService
+from app.services.prompt_loader import load_prompt_by_purpose
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +33,59 @@ class BriefingService:
     def __init__(self, session: Session, settings: Settings | None = None) -> None:
         self._session = session
         self._settings = settings or get_settings()
+
+    def _load_clusters(
+        self,
+        tag: Tag,
+        window_start: datetime,
+        window_end: datetime,
+    ) -> list[StoryCluster]:
+        clusters = list(
+            self._session.scalars(
+                select(StoryCluster)
+                .options(
+                    selectinload(StoryCluster.members)
+                    .selectinload(StoryClusterArticle.article)
+                    .selectinload(Article.feed_source),
+                    selectinload(StoryCluster.members)
+                    .selectinload(StoryClusterArticle.article)
+                    .selectinload(Article.insight),
+                )
+                .where(
+                    StoryCluster.window_start < window_end,
+                    StoryCluster.window_end > window_start,
+                )
+                .order_by(StoryCluster.sort_order)
+            ).all()
+        )
+        return [c for c in clusters if cluster_matches_tag(c, tag)]
+
+    def _generate_intro(
+        self,
+        tag: Tag,
+        window_start: datetime,
+        window_end: datetime,
+        clusters: list[StoryCluster],
+    ) -> str:
+        if not clusters:
+            return ""
+        lines = [
+            f"- {c.title}: {c.summary[:200]}"
+            for c in clusters[:30]
+        ]
+        template = load_prompt_by_purpose(self._session, "briefing_intro")
+        try:
+            return call_brief_intro_llm(
+                tag,
+                window_start,
+                window_end,
+                "\n".join(lines),
+                template=template,
+                settings=self._settings,
+            )
+        except Exception:
+            logger.exception("Failed to generate intro for tag %s", tag.slug)
+            return "\n".join(lines[:5])
 
     def generate_for_tag(
         self,
@@ -65,25 +122,31 @@ class BriefingService:
             self._session.delete(existing)
             self._session.flush()
 
-        articles = self._session.scalars(
-            select(Article)
-            .options(selectinload(Article.insight))
-            .where(
-                Article.tag_id == tag_id,
-                Article.status == "extracted",
-                Article.fetched_at >= window_start,
-                Article.fetched_at < window_end,
+        clustering = ClusteringService(self._session, self._settings)
+        if clustering._settings.clustering_mode.lower() == "llm":
+            clustering.cluster_for_tag(
+                tag_id,
+                window_start=window_start,
+                window_end=window_end,
+                force=force,
             )
-            .order_by(Article.fetched_at.desc())
-        ).all()
-
-        rows: list[tuple[Article, ArticleInsight]] = []
-        for article in articles:
-            if article.insight is None:
-                continue
-            rows.append((article, article.insight))
-
-        content_md = render_tag_brief_md(tag, window_start, window_end, rows)
+        elif force:
+            clustering.cluster_window(
+                window_start=window_start,
+                window_end=window_end,
+                force=True,
+            )
+        clusters = self._load_clusters(tag, window_start, window_end)
+        intro_md = self._generate_intro(tag, window_start, window_end, clusters)
+        article_count = sum(c.article_count for c in clusters)
+        content_md = render_cluster_brief_md(
+            tag,
+            window_start,
+            window_end,
+            clusters,
+            intro_md=intro_md,
+            article_count=article_count,
+        )
         title = f"{tag.name} 简报 · {window_start.strftime('%Y-%m-%d %H:%M')} UTC"
 
         brief = TagBrief(
@@ -91,17 +154,19 @@ class BriefingService:
             window_start=window_start,
             window_end=window_end,
             title=title,
+            intro_md=intro_md,
             content_md=content_md,
             status="generated",
         )
         self._session.add(brief)
         self._session.flush()
 
-        for order, (article, _) in enumerate(rows):
+        for order, cluster in enumerate(clusters):
             self._session.add(
                 TagBriefItem(
                     tag_brief_id=brief.id,
-                    article_id=article.id,
+                    story_cluster_id=cluster.id,
+                    article_id=None,
                     sort_order=order,
                 )
             )
@@ -109,13 +174,12 @@ class BriefingService:
         self._session.commit()
         self._session.refresh(brief)
         logger.info(
-            "Generated brief for tag %s: items=%s window=%s..%s",
+            "Generated brief for tag %s: clusters=%s articles=%s",
             tag.slug,
-            len(rows),
-            window_start,
-            window_end,
+            len(clusters),
+            article_count,
         )
-        return brief, len(rows)
+        return brief, len(clusters)
 
     def generate_all_tags(
         self,
@@ -124,6 +188,18 @@ class BriefingService:
     ) -> list[BriefingStats]:
         tags = self._session.scalars(select(Tag).order_by(Tag.slug)).all()
         window_start, window_end = current_brief_window(self._settings)
+        clustering = ClusteringService(self._session, self._settings)
+        if clustering._settings.clustering_mode.lower() != "llm":
+            try:
+                clustering.cluster_window(
+                    window_start=window_start,
+                    window_end=window_end,
+                    force=force,
+                )
+            except Exception:
+                logger.exception("Vector clustering failed before generate_all_tags")
+                self._session.rollback()
+
         results: list[BriefingStats] = []
 
         for tag in tags:

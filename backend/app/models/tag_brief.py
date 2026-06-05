@@ -34,6 +34,7 @@ class TagBrief(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         nullable=False,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    intro_md: Mapped[str] = mapped_column(Text, nullable=False, default="")
     content_md: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="generated")
     generated_at: Mapped[datetime] = mapped_column(
@@ -58,12 +59,17 @@ class TagBriefItem(Base, UUIDPrimaryKeyMixin):
         nullable=False,
         index=True,
     )
-    article_id: Mapped[uuid.UUID] = mapped_column(
+    story_cluster_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("story_clusters.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    article_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("articles.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
     sort_order: Mapped[int] = mapped_column(nullable=False, default=0)
 
     brief: Mapped["TagBrief"] = relationship(back_populates="items")
-    article: Mapped["Article"] = relationship()
+    article: Mapped["Article | None"] = relationship()

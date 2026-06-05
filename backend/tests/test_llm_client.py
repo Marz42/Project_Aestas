@@ -74,6 +74,7 @@ def test_call_deepseek_for_insight_sets_source_url() -> None:
         key_facts=[],
         why_it_matters="W",
         source_url="wrong",
+        content_tags=["technology"],
     )
     mock_client = MagicMock()
     mock_structured = MagicMock()
